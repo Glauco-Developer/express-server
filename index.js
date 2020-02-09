@@ -1,8 +1,29 @@
+const config = require('config');
+const morgan = require('morgan');
+const helmet = require('helmet');
 const Joi = require('joi');
+const logger = require('./logger');
 const express = require('express');
 const app = express();
 
 app.use(express.json());
+
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static('public'));
+
+app.use(helmet());
+
+// Configuration
+console.log('Application Name: ' + config.get('name'));
+console.log('Mail server: ' + config.get('mail.host'));
+console.log('Mail password: ' + config.get('mail.password'));
+
+if(app.get('env') === 'development'){
+    app.use(morgan('tiny'));
+    console.log('Development')
+}
+
+app.use(logger);
 
 const courses = [
     { id: 1, name: 'glauco' },
@@ -16,6 +37,7 @@ app.get('/', (req, res) => {
 app.get('/api/courses', (req, res) => {
     res.send(courses);
 })
+
 app.get('/api/courses/:id', (req, res) => {
     const course = courses.find(c => c.id === parseInt(req.params.id));
     if(!course) return res.status(404).send('The course with the given ID was not found');
