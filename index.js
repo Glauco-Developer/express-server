@@ -1,5 +1,4 @@
-const startupDebugger = require('debug')('app:startup');
-const dbDebugger = require('debug')('app:db');
+const debbug = require('debug')('app:startup');
 
 const config = require('config');
 const morgan = require('morgan');
@@ -8,6 +7,9 @@ const Joi = require('joi');
 const logger = require('./logger');
 const express = require('express');
 const app = express();
+
+app.set('view engine', 'pug');
+// app.set('views','./views') Default
 
 app.use(express.json());
 
@@ -21,16 +23,10 @@ console.log('Application Name: ' + config.get('name'));
 console.log('Mail server: ' + config.get('mail.host'));
 console.log('Mail password: ' + config.get('mail.password'));
 
-// Set DEBUG=app:*
-
 if(app.get('env') === 'development'){
     app.use(morgan('tiny'));
-    startupDebugger('Morgan enabled...');
+    debbug('Morgan enabled...');
 }
-
-// DB Work
-dbDebugger('Connected to the database...');
-
 
 app.use(logger);
 
@@ -40,7 +36,7 @@ const courses = [
 ];
 
 app.get('/', (req, res) => {
-    res.send('hello world');
+    res.render('index', {title: 'Express App', message: 'Hello'})
 });
 
 app.get('/api/courses', (req, res) => {
@@ -52,6 +48,7 @@ app.get('/api/courses/:id', (req, res) => {
     if(!course) return res.status(404).send('The course with the given ID was not found');
     res.send(course);
 })
+
 app.post('/api/courses', (req, res) => {
     const { error } = validateCourse(req.body);
     if(error) return res.status(400).send(error.details[0].message);
@@ -63,6 +60,7 @@ app.post('/api/courses', (req, res) => {
     courses.push(course);
     res.send(course);
 })
+
 app.put('/api/courses/:id', (req,res) => {
     const course = courses.find(c => c.id === parseInt(req.params.id));
     if(!course) return res.status(404).send('The course with the given ID was not found');
